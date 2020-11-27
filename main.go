@@ -446,12 +446,6 @@ func main() {
 	database.Initialize()
 	db = database.DB
 
-	// 路由文件
-	router.HandleFunc("/", homeHandler).Methods("GET").Name("home")
-
-	// tips gorilla/mux 使用的是精准匹配 如果路由不是 /about 而是 /about/ 多了一个斜杠的话也是找不处理方法的
-	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
-
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesShowHandler).Methods("GET").Name("articles.show")
 	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("articles.create")
@@ -459,8 +453,6 @@ func main() {
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesUpdateHandler).Methods("POST").Name("articles.update")
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
 	router.HandleFunc("/articles/{id:[0-9]+}/delete", articlesDeleteHandler).Methods("POST").Name("articles.delete")
-	// 自定义404页面
-	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 
 	router.Use(forceHTMLMiddleware)
 

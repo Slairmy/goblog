@@ -1,23 +1,24 @@
 package route
 
 import (
+	"goblog/pkg/logger"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-// Router 全局路由变量
-var Router *mux.Router
+var route *mux.Router
 
-// Initialize 包初始化调用
-func Initialize() {
-	Router = mux.NewRouter()
+// SetRoute 设置路由实例，以供 Name2URL 等函数使用
+func SetRoute(r *mux.Router) {
+	route = r
 }
 
 // Name2URL 路由名称转换成URL路径
 func Name2URL(routeName string, pairs ...string) string {
-	url, err := Router.Get(routeName).URL(pairs...)
+	url, err := route.Get(routeName).URL(pairs...)
 	if err != nil {
+		logger.LogError(err)
 		return ""
 	}
 

@@ -8,7 +8,6 @@ import (
 	"goblog/pkg/types"
 	"html/template"
 	"net/http"
-	"strconv"
 	"unicode/utf8"
 
 	"gorm.io/gorm"
@@ -58,8 +57,6 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "服务器错误")
 		}
 	} else {
-		fmt.Println(types.Int64ToString(article.ID))
-		fmt.Println(route.Name2URL("articles.delete", "id", "2"))
 		//tmpl, err := template.ParseFiles("resources/views/articles/show.gohtml")
 		// 高级用法 使用New先初始化,再注册函数,最后解析文件
 		tmpl, err := template.New("show.gohtml").Funcs(
@@ -106,7 +103,9 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 		}
 		_article.Create()
 		if _article.ID > 0 {
-			fmt.Fprint(w, "插入成功,ID为:"+strconv.FormatInt(_article.ID, 10))
+			// 重定向一下
+			http.Redirect(w, r, route.Name2URL("articles.index"), http.StatusFound)
+
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "500 服务器错误")

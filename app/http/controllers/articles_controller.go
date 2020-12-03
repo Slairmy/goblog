@@ -5,8 +5,7 @@ import (
 	"goblog/app/models/article"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
-	"goblog/pkg/types"
-	"html/template"
+	"goblog/pkg/view"
 	"net/http"
 	"unicode/utf8"
 
@@ -20,7 +19,7 @@ type ArticlesController struct {
 // ArticlesFormData 给模版文件解析的变量结构体
 type ArticlesFormData struct {
 	Title, Content string
-	URL            string
+	Article        article.Article
 	Errors         map[string]string
 }
 
@@ -32,12 +31,9 @@ func (*ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 		logger.LogError(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "服务器错误")
-	} else {
-		// 加载模版
-		tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
-		logger.LogError(err)
-		tmpl.Execute(w, articles)
 	}
+
+	view.Render(w, articles, "articles.index")
 }
 
 // Show 显示blog详情
@@ -56,35 +52,15 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "服务器错误")
 		}
-	} else {
-		//tmpl, err := template.ParseFiles("resources/views/articles/show.gohtml")
-		// 高级用法 使用New先初始化,再注册函数,最后解析文件
-		tmpl, err := template.New("show.gohtml").Funcs(
-			template.FuncMap{
-				"RouteName2URL": route.Name2URL,
-				"Int64ToString": types.Int64ToString,
-			}).ParseFiles("resources/views/articles/show.gohtml")
-		logger.LogError(err)
-		tmpl.Execute(w, article)
 	}
+	fmt.Println(article.GetStringID())
+	// 渲染模版
+	view.Render(w, article, "articles.show")
 }
 
 // Create 创建blog
 func (*ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
-	storeURL := route.Name2URL("articles.store")
-	data := ArticlesFormData{
-		Title:   "",
-		Content: "",
-		URL:     storeURL,
-		Errors:  nil,
-	}
-
-	tmpl, err := template.ParseFiles("resources/views/articles/create.gohtml")
-
-	if err != nil {
-		panic(err)
-	}
-	tmpl.Execute(w, data)
+	view.Render(w, ArticlesFormData{}, "articles.create", "articles._form_field")
 }
 
 // Store 创建blog
@@ -112,26 +88,18 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-
-		storeURL := route.Name2URL("articles.store")
-
-		data := ArticlesFormData{
+		view.Render(w, ArticlesFormData{
 			Title:   title,
 			Content: content,
-			URL:     storeURL,
 			Errors:  errors,
-		}
-
-		tmpl, _ := template.ParseFiles("resources/views/articles/create.gohtml")
-		tmpl.Execute(w, data)
+		}, "articles.create", "articles._form_field")
 	}
 }
 
 // Edit 创建blog
 func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 	id := route.GetRouteVariable("id", r)
-	article, err := article.Get(id)
-
+	_article, err := article.Get(id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -142,18 +110,13 @@ func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 
-		// 拼接参数
-		updateURL := route.Name2URL("articles.update", "id", id)
-
-		logger.LogError(err)
-		data := ArticlesFormData{
-			Title:   article.Title,
-			Content: article.Content,
-			URL:     updateURL,
+		view.Render(w, ArticlesFormData{
+			Title:   _article.Title,
+			Content: _article.Content,
+			Article: _article,
 			Errors:  nil,
-		}
-		tmpl, _ := template.ParseFiles("resources/views/articles/edit.gohtml")
-		tmpl.Execute(w, data)
+		}, "articles.edit", "articles._form_field")
+
 	}
 }
 
@@ -198,16 +161,12 @@ func (*ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
 			}
 
 		} else {
-			storeURL := route.Name2URL("articles.update", "id", id)
-			data := ArticlesFormData{
+			view.Render(w, ArticlesFormData{
 				Title:   title,
 				Content: content,
-				URL:     storeURL,
+				Article: _article,
 				Errors:  errors,
-			}
-
-			tmpl, _ := template.ParseFiles("resources/views/articles/edit.gohtml")
-			tmpl.Execute(w, data)
+			}, "articles.edit", "articles._form_field")
 		}
 	}
 }

@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"goblog/app/models/article"
+	"goblog/app/requests"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
 	"goblog/pkg/view"
@@ -16,13 +17,6 @@ import (
 type ArticlesController struct {
 }
 
-// ArticlesFormData 给模版文件解析的变量结构体
-type ArticlesFormData struct {
-	Title, Content string
-	Article        article.Article
-	Errors         map[string]string
-}
-
 // Index blog列表
 func (*ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 	articles, err := article.GetAll()
@@ -33,7 +27,7 @@ func (*ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "服务器错误")
 	}
 
-	view.Render(w, articles, "articles.index")
+	view.Render(w, view.D{"Articles": articles}, "articles.index")
 }
 
 // Show 显示blog详情
@@ -53,30 +47,28 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "服务器错误")
 		}
 	}
-	fmt.Println(article.GetStringID())
 	// 渲染模版
-	view.Render(w, article, "articles.show")
+	view.Render(w, view.D{"Article": article}, "articles.show")
 }
 
 // Create 创建blog
 func (*ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
-	view.Render(w, ArticlesFormData{}, "articles.create", "articles._form_field")
+	view.Render(w, view.D{}, "articles.create", "articles._form_field")
 }
 
 // Store 创建blog
 func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 
 	title := r.FormValue("title")
-	content := r.FormValue("body")
+	content := r.FormValue("content")
 
-	errors := validateArticleFormData(title, content)
-
+	_article := article.Article{
+		Title:   title,
+		Content: content,
+	}
+	errors := requests.ValidateArticleForm(_article)
 	if len(errors) == 0 {
 		// 验证成功保存
-		_article := article.Article{
-			Title:   title,
-			Content: content,
-		}
 		_article.Create()
 		if _article.ID > 0 {
 			// 重定向一下
@@ -88,10 +80,9 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		view.Render(w, ArticlesFormData{
-			Title:   title,
-			Content: content,
-			Errors:  errors,
+		view.Render(w, view.D{
+			"Article": _article,
+			"Errors":  errors,
 		}, "articles.create", "articles._form_field")
 	}
 }
@@ -110,11 +101,8 @@ func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 
-		view.Render(w, ArticlesFormData{
-			Title:   _article.Title,
-			Content: _article.Content,
-			Article: _article,
-			Errors:  nil,
+		view.Render(w, view.D{
+			"Article": _article,
 		}, "articles.edit", "articles._form_field")
 
 	}
@@ -125,6 +113,7 @@ func (*ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
 	id := route.GetRouteVariable("id", r)
 
 	_article, err := article.Get(id)
+
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -137,14 +126,11 @@ func (*ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// 无错误
-		title := r.FormValue("title")
-		content := r.FormValue("content")
+		_article.Title = r.PostFormValue("titla")
+		_article.Content = r.PostFormValue("content")
 
-		errors := validateArticleFormData(title, content)
+		errors := requests.ValidateArticleForm(_article)
 		if len(errors) == 0 { // 无错误
-
-			_article.Title = title
-			_article.Content = content
 
 			rowsAffected, err := _article.Update()
 			if err != nil {
@@ -161,11 +147,9 @@ func (*ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
 			}
 
 		} else {
-			view.Render(w, ArticlesFormData{
-				Title:   title,
-				Content: content,
-				Article: _article,
-				Errors:  errors,
+			view.Render(w, view.D{
+				"Article": _article,
+				"Errors":  errors,
 			}, "articles.edit", "articles._form_field")
 		}
 	}

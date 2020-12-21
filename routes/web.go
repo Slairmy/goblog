@@ -41,6 +41,10 @@ func RegisterWebRoutes(r *mux.Router) {
 	r.HandleFunc("/auth/do-login", uac.DoLogin).Methods("POST").Name("auth.dologin")
 	r.HandleFunc("/auth/logout", uac.Logout).Methods("POST").Name("auth.logout")
 
+	/**用户**/
+	uc := new(controllers.UserController)
+	r.HandleFunc("/users/{id:[0-9]+}", uc.Show).Methods("GET").Name("users.show")
+
 	// 使用中间件
 	r.Use(middlewares.StartSession)
 	//r.Use(middlewares.ForceHTML)

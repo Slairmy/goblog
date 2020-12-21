@@ -42,7 +42,7 @@ func ConnectDB() *gorm.DB {
 	} else {
 		level = gormlogger.Error
 	}
-
+	//level = gormlogger.Info
 	DB, err = gorm.Open(gormConfig, &gorm.Config{
 		// gorm 打印日志
 		Logger: gormlogger.Default.LogMode(level),

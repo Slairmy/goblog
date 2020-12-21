@@ -5,6 +5,7 @@ import (
 	"goblog/pkg/logger"
 	"goblog/pkg/model"
 	"goblog/pkg/password"
+	"goblog/pkg/route"
 	"goblog/pkg/types"
 	"time"
 )
@@ -21,6 +22,11 @@ type User struct {
 
 	// gorm: "-" 设置 GORM 在读写时忽略此字段
 	PasswordComfirm string `gorm:"-" valid:"password_comfirm"`
+}
+
+// Link 生成用户链接
+func (user User) Link() string {
+	return route.Name2URL("users.show", "id", user.GetStringID())
 }
 
 // Create 创建用户

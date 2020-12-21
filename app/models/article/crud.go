@@ -11,7 +11,9 @@ func Get(idstr string) (Article, error) {
 	var article Article
 	id := types.StringToInt(idstr)
 
-	if err := model.DB.First(&article, id).Error; err != nil {
+	// 预加载关联数据
+	if err := model.DB.Preload("User").First(&article, id).Error; err != nil {
+		//if err := model.DB.First(&article, id).Error; err != nil {
 		return article, err
 	}
 
@@ -21,7 +23,12 @@ func Get(idstr string) (Article, error) {
 // GetAll 获取所有的blog
 func GetAll() ([]Article, error) {
 	var articles []Article
-	if err := model.DB.Find(&articles).Error; err != nil {
+
+	// 预加载关联数据
+	// 调试单条模型可以使用 GORM提供的Debug方法 model.DB.Debug().Preload(model).Find().Error
+	if err := model.DB.Preload("User").Find(&articles).Error; err != nil {
+		//if err := model.DB.Find(&articles).Error; err != nil {
+
 		return articles, err
 	}
 
@@ -55,4 +62,15 @@ func (article *Article) Delete() (rowsAffected int64, err error) {
 		return 0, err
 	}
 	return result.RowsAffected, nil
+}
+
+// GetByUserID 通过userID获取文章
+func GetByUserID(userID string) ([]Article, error) {
+	var articles []Article
+
+	if err := model.DB.Preload("User").Where("user_id = ?", userID).Find(&articles).Error; err != nil {
+		return articles, err
+	}
+
+	return articles, nil
 }

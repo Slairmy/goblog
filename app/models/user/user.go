@@ -16,6 +16,8 @@ import (
 type User struct {
 	models.BaseModel
 	Name          string    `gorm:"type:varchar(255);not null;unique" valid:"name"`
+	Avatar        string    `gorm:"type:varchar(255);default:NULL" valid:"avatar"`
+	Introduction  string    `gorm:"type:varchar(255);default:NULL" valid:"introduction"`
 	Email         string    `gorm:"type:varchar(255);default:NULL;unique" valid:"email"`
 	Password      string    `gorm:"type:varchar(255)" valid:"password"`
 	EmailVerifyAt time.Time `gorm:"column:email_verify_at"`

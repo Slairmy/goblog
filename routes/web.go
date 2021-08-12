@@ -32,6 +32,7 @@ func RegisterWebRoutes(r *mux.Router) {
 	/**静态资源路由**/
 	r.PathPrefix("/css/").Handler(http.FileServer(http.Dir("./public")))
 	r.PathPrefix("/js/").Handler(http.FileServer(http.Dir("./public")))
+	r.PathPrefix("/image/").Handler(http.FileServer(http.Dir("./public")))
 
 	/**用户认证**/
 	uac := new(controllers.AuthController)
@@ -44,6 +45,11 @@ func RegisterWebRoutes(r *mux.Router) {
 	/**用户**/
 	uc := new(controllers.UserController)
 	r.HandleFunc("/users/{id:[0-9]+}", uc.Show).Methods("GET").Name("users.show")
+
+	/**分类**/
+	ca := new(controllers.CategoryController)
+	r.HandleFunc("/categories/create", ca.Create).Methods("GET").Name("categories.create")
+	r.HandleFunc("/categories", ca.Store).Methods("POST").Name("categories.store")
 
 	// 使用中间件
 	r.Use(middlewares.StartSession)
